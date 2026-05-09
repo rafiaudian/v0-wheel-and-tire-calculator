@@ -47,60 +47,17 @@ ${wheelBrand ? `- Wheel shows "${wheelBrand.toUpperCase()}" on center cap or spo
 
     // Extract images from response
     const images: string[] = []
-    
-    // Method 1: Check result.files (AI SDK 6 pattern)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const resultAny = result as any
-    
-    if (resultAny.files && Array.isArray(resultAny.files)) {
-      for (const file of resultAny.files) {
-        if (file.mimeType?.startsWith("image/") && file.base64) {
-          images.push(`data:${file.mimeType};base64,${file.base64}`)
-        } else if (file.mimeType?.startsWith("image/") && file.data) {
-          images.push(`data:${file.mimeType};base64,${file.data}`)
-        }
-      }
-    }
 
-    // Method 2: Check response messages for inline images
-    if (resultAny.response?.messages) {
-      for (const message of resultAny.response.messages) {
-        if (Array.isArray(message.content)) {
-          for (const part of message.content) {
-            if (part.type === "file" || part.type === "image") {
-              const mimeType = part.mimeType || "image/png"
-              const data = part.data || part.base64
-              if (data && mimeType.startsWith("image/")) {
-                images.push(`data:${mimeType};base64,${data}`)
-              }
-            }
-          }
+    // Use the standard AI SDK 4.x pattern to extract multimodal image parts.
+    // Gemini 2.0 returns images as parts within the response messages content.
+    result.response.messages.forEach((message) => {
+      message.content.forEach((part) => {
+        if (part.type === "image") {
+          const base64 = Buffer.from(part.image).toString("base64")
+          images.push(`data:${part.mimeType || "image/png"};base64,${base64}`)
         }
-      }
-    }
-
-    // Method 3: Check rawResponse for Gemini-specific structure
-    if (resultAny.rawResponse) {
-      try {
-        const raw = typeof resultAny.rawResponse === "string" 
-          ? JSON.parse(resultAny.rawResponse) 
-          : resultAny.rawResponse
-        
-        if (raw.candidates) {
-          for (const candidate of raw.candidates) {
-            if (candidate.content?.parts) {
-              for (const part of candidate.content.parts) {
-                if (part.inlineData?.mimeType?.startsWith("image/")) {
-                  images.push(`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`)
-                }
-              }
-            }
-          }
-        }
-      } catch {
-        // Ignore parsing errors
-      }
-    }
+      })
+    })
 
     console.log("[v0] Generate wheel result:", {
       hasText: !!result.text,
