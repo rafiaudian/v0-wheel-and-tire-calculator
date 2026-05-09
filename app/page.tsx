@@ -1,14 +1,14 @@
 import { FitmentCalculator } from "@/components/fitment-calculator"
 import { FitmentChatbot } from "@/components/fitment-chatbot"
 import { Badge } from "@/components/ui/badge"
-import { Gauge, CircleDot, MessageCircle } from "lucide-react"
+import { Gauge, CircleDot, MessageCircle, ArrowLeftRight } from "lucide-react"
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-background">
       {/* Hero Section */}
       <header className="relative border-b border-border/50 bg-gradient-to-b from-card/50 to-background">
-        <div className="container mx-auto px-4 py-12 lg:py-16">
+        <div className="container mx-auto px-4 py-10 lg:py-14">
           <div className="max-w-3xl mx-auto text-center">
             <Badge variant="secondary" className="mb-4">
               <Gauge className="h-3 w-3 mr-1" />
@@ -18,20 +18,20 @@ export default function Home() {
               <span className="text-primary">Fitment</span> Calculator
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed text-pretty max-w-2xl mx-auto">
-              Hitung dan visualisasikan wheel & tire fitment mobil kamu. Dapatkan rekomendasi ban
-              terbaik berdasarkan spesifikasi dan region pembelian.
+              Bandingkan dan visualisasikan wheel & tire fitment mobil kamu. 
+              Dapatkan rekomendasi ban terbaik dengan link pembelian langsung ke marketplace.
             </p>
             
             {/* Feature badges */}
             <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CircleDot className="h-4 w-4 text-primary" />
-                <span>Visualisasi Dinamis</span>
+                <ArrowLeftRight className="h-4 w-4 text-primary" />
+                <span>Perbandingan Side-by-Side</span>
               </div>
               <div className="h-1 w-1 rounded-full bg-border" />
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Gauge className="h-4 w-4 text-primary" />
-                <span>Kalkulasi Akurat</span>
+                <CircleDot className="h-4 w-4 text-primary" />
+                <span>Visualisasi Cross-Section</span>
               </div>
               <div className="h-1 w-1 rounded-full bg-border" />
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -125,7 +125,7 @@ export default function Home() {
       <footer className="border-t border-border/50 py-6">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
           <p>
-            Built by car enthusiasts, for car enthusiasts. 🏎️
+            Built by car enthusiasts, for car enthusiasts.
           </p>
           <p className="mt-2">
             Selalu konsultasikan dengan profesional sebelum modifikasi.
