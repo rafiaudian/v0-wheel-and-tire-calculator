@@ -1,11 +1,14 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { WheelCrossSection } from "./wheel-cross-section"
+import { WheelFrontView } from "./wheel-front-view"
+import { AIWheelVisualizer } from "./ai-wheel-visualizer"
 import type { TireSpec, WheelSpec, FitmentResult } from "@/lib/fitment-data"
-import { ArrowRight, ArrowUp, ArrowDown, Minus, AlertTriangle, CheckCircle2 } from "lucide-react"
+import { ArrowRight, ArrowUp, ArrowDown, Minus, AlertTriangle, CheckCircle2, Layers, Circle, Sparkles } from "lucide-react"
 
 interface FitmentComparisonProps {
   currentTire: TireSpec
@@ -14,6 +17,18 @@ interface FitmentComparisonProps {
   desiredTire: TireSpec
   desiredWheel: WheelSpec
   desiredFitment: FitmentResult
+  currentWheelBrand?: string
+  currentWheelModel?: string
+  currentTireBrand?: string
+  currentTireModel?: string
+  currentSpokeCount?: number
+  currentWheelColor?: string
+  desiredWheelBrand?: string
+  desiredWheelModel?: string
+  desiredTireBrand?: string
+  desiredTireModel?: string
+  desiredSpokeCount?: number
+  desiredWheelColor?: string
 }
 
 interface ComparisonItem {
@@ -22,7 +37,6 @@ interface ComparisonItem {
   desired: string
   diff: number
   unit: string
-  positive?: boolean // true = higher is better, false = lower is better, undefined = neutral
 }
 
 export function FitmentComparison({
@@ -31,8 +45,21 @@ export function FitmentComparison({
   currentFitment,
   desiredTire,
   desiredWheel,
-  desiredFitment
+  desiredFitment,
+  currentWheelBrand = "",
+  currentWheelModel = "",
+  currentTireBrand = "",
+  currentTireModel = "",
+  currentSpokeCount = 10,
+  currentWheelColor = "Gunmetal",
+  desiredWheelBrand = "",
+  desiredWheelModel = "",
+  desiredTireBrand = "",
+  desiredTireModel = "",
+  desiredSpokeCount = 10,
+  desiredWheelColor = "Gunmetal"
 }: FitmentComparisonProps) {
+  const [viewMode, setViewMode] = useState<"cross" | "front" | "ai">("cross")
   
   const comparisons: ComparisonItem[] = useMemo(() => {
     return [
@@ -88,16 +115,14 @@ export function FitmentComparison({
     ]
   }, [currentTire, currentWheel, currentFitment, desiredTire, desiredWheel, desiredFitment])
 
-  // Calculate speedometer difference
   const speedoDiff = useMemo(() => {
     const circumDiff = desiredFitment.circumference / currentFitment.circumference
     return ((circumDiff - 1) * 100)
   }, [currentFitment, desiredFitment])
 
-  // Check if sizes are compatible
   const isCompatible = useMemo(() => {
     const diameterDiff = Math.abs(desiredFitment.overallDiameter - currentFitment.overallDiameter)
-    return diameterDiff <= 30 // Within 30mm is generally acceptable
+    return diameterDiff <= 30
   }, [currentFitment, desiredFitment])
 
   const getDiffIcon = (diff: number) => {
@@ -112,14 +137,22 @@ export function FitmentComparison({
     return "text-amber-500"
   }
 
+  const currentLabel = currentWheelBrand && currentWheelModel 
+    ? `${currentWheelBrand} ${currentWheelModel}` 
+    : "Setup Sekarang"
+  
+  const desiredLabel = desiredWheelBrand && desiredWheelModel 
+    ? `${desiredWheelBrand} ${desiredWheelModel}` 
+    : "Setup Baru"
+
   return (
     <div className="space-y-6">
-      {/* Side by side visualization */}
+      {/* Visualization Section */}
       <Card className="border-border/50 bg-card/50 backdrop-blur overflow-hidden">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center justify-between flex-wrap gap-2">
             <span>Perbandingan Visualisasi</span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {isCompatible ? (
                 <Badge className="bg-green-500/10 text-green-500">
                   <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -135,34 +168,124 @@ export function FitmentComparison({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-2 gap-4">
-            {/* Current fitment */}
-            <div className="p-4 rounded-xl bg-secondary/30 border border-border/50">
-              <WheelCrossSection
-                tire={currentTire}
-                wheel={currentWheel}
-                fitment={currentFitment}
-                label="Setup Sekarang"
-              />
-            </div>
+          {/* View Mode Tabs */}
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "cross" | "front" | "ai")} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsTrigger value="cross" className="flex items-center gap-2">
+                <Layers className="h-4 w-4" />
+                <span className="hidden sm:inline">Cross Section</span>
+                <span className="sm:hidden">Section</span>
+              </TabsTrigger>
+              <TabsTrigger value="front" className="flex items-center gap-2">
+                <Circle className="h-4 w-4" />
+                <span className="hidden sm:inline">Front View</span>
+                <span className="sm:hidden">Front</span>
+              </TabsTrigger>
+              <TabsTrigger value="ai" className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                <span className="hidden sm:inline">AI Generate</span>
+                <span className="sm:hidden">AI</span>
+              </TabsTrigger>
+            </TabsList>
 
-            {/* Arrow separator for desktop */}
-            <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-              <div className="bg-primary rounded-full p-2">
-                <ArrowRight className="h-5 w-5 text-primary-foreground" />
+            <TabsContent value="cross">
+              <div className="grid md:grid-cols-2 gap-4 relative">
+                {/* Current fitment - Cross Section */}
+                <div className="p-4 rounded-xl bg-secondary/30 border border-border/50">
+                  <WheelCrossSection
+                    tire={currentTire}
+                    wheel={currentWheel}
+                    fitment={currentFitment}
+                    label={currentLabel}
+                  />
+                </div>
+
+                {/* Arrow separator for desktop */}
+                <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                  <div className="bg-primary rounded-full p-2">
+                    <ArrowRight className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                </div>
+
+                {/* Desired fitment - Cross Section */}
+                <div className="p-4 rounded-xl bg-secondary/30 border border-primary/30">
+                  <WheelCrossSection
+                    tire={desiredTire}
+                    wheel={desiredWheel}
+                    fitment={desiredFitment}
+                    label={desiredLabel}
+                  />
+                </div>
               </div>
-            </div>
+            </TabsContent>
 
-            {/* Desired fitment */}
-            <div className="p-4 rounded-xl bg-secondary/30 border border-primary/30">
-              <WheelCrossSection
-                tire={desiredTire}
-                wheel={desiredWheel}
-                fitment={desiredFitment}
-                label="Setup Baru"
-              />
-            </div>
-          </div>
+            <TabsContent value="front">
+              <div className="grid md:grid-cols-2 gap-4 relative">
+                {/* Current fitment - Front View */}
+                <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 flex flex-col items-center">
+                  <WheelFrontView
+                    tire={currentTire}
+                    wheel={currentWheel}
+                    fitment={currentFitment}
+                    wheelBrand={currentWheelBrand}
+                    wheelModel={currentWheelModel}
+                    tireBrand={currentTireBrand}
+                    tireModel={currentTireModel}
+                    spokeCount={currentSpokeCount}
+                  />
+                </div>
+
+                {/* Arrow separator for desktop */}
+                <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                  <div className="bg-primary rounded-full p-2">
+                    <ArrowRight className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                </div>
+
+                {/* Desired fitment - Front View */}
+                <div className="p-4 rounded-xl bg-secondary/30 border border-primary/30 flex flex-col items-center">
+                  <WheelFrontView
+                    tire={desiredTire}
+                    wheel={desiredWheel}
+                    fitment={desiredFitment}
+                    wheelBrand={desiredWheelBrand}
+                    wheelModel={desiredWheelModel}
+                    tireBrand={desiredTireBrand}
+                    tireModel={desiredTireModel}
+                    spokeCount={desiredSpokeCount}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="ai">
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Current Setup AI */}
+                <AIWheelVisualizer
+                  tire={currentTire}
+                  wheel={currentWheel}
+                  wheelBrand={currentWheelBrand}
+                  wheelModel={currentWheelModel}
+                  tireBrand={currentTireBrand}
+                  tireModel={currentTireModel}
+                  spokeCount={currentSpokeCount}
+                  wheelColor={currentWheelColor}
+                />
+
+                {/* Desired Setup AI */}
+                <AIWheelVisualizer
+                  tire={desiredTire}
+                  wheel={desiredWheel}
+                  wheelBrand={desiredWheelBrand}
+                  wheelModel={desiredWheelModel}
+                  tireBrand={desiredTireBrand}
+                  tireModel={desiredTireModel}
+                  spokeCount={desiredSpokeCount}
+                  wheelColor={desiredWheelColor}
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
@@ -179,15 +302,15 @@ export function FitmentComparison({
                 className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
               >
                 <span className="text-sm text-muted-foreground">{item.label}</span>
-                <div className="flex items-center gap-4">
-                  <span className="font-mono text-sm w-24 text-right">
+                <div className="flex items-center gap-2 sm:gap-4">
+                  <span className="font-mono text-xs sm:text-sm w-16 sm:w-24 text-right">
                     {item.current}{item.unit && ` ${item.unit}`}
                   </span>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-mono text-sm font-semibold w-24">
+                  <ArrowRight className="h-4 w-4 text-muted-foreground hidden sm:block" />
+                  <span className="font-mono text-xs sm:text-sm font-semibold w-16 sm:w-24">
                     {item.desired}{item.unit && ` ${item.unit}`}
                   </span>
-                  <div className={`flex items-center gap-1 w-20 justify-end ${getDiffColor(item.diff)}`}>
+                  <div className={`flex items-center gap-1 w-16 sm:w-20 justify-end ${getDiffColor(item.diff)}`}>
                     {getDiffIcon(item.diff)}
                     <span className="font-mono text-xs">
                       {item.diff > 0 ? '+' : ''}{item.diff.toFixed(1)}

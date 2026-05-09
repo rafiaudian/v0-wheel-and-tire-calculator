@@ -219,6 +219,80 @@ export const regions = [
   { value: "global", label: "Global" },
 ]
 
+// Popular wheel brands
+export const wheelBrands = [
+  // Japanese JDM Brands
+  "Rays Engineering",
+  "Work Wheels",
+  "SSR",
+  "Enkei",
+  "Weds",
+  "Advan Racing",
+  "Gram Lights",
+  "NISMO",
+  "Mugen",
+  "BBS Japan",
+  "Prodrive",
+  "Volk Racing",
+  "Regamaster",
+  // European Brands
+  "BBS",
+  "OZ Racing",
+  "Rotiform",
+  "HRE",
+  "ADV.1",
+  "Vossen",
+  "Forgeline",
+  // American Brands
+  "American Racing",
+  "Fuel",
+  "Method Race",
+  "Fifteen52",
+  "Konig",
+  // Budget/Regional Brands
+  "Rota",
+  "XXR",
+  "Cosmis Racing",
+  "JNC",
+  "Avid.1",
+  "F1R",
+  "MST",
+  "Aodhan",
+  "ESR",
+  "Niche",
+  "Vorsteiner",
+  "Stance",
+]
+
+// Popular tire brand names (for quick selection)
+export const tireBrandNames = [
+  "Michelin",
+  "Bridgestone",
+  "Continental",
+  "Pirelli",
+  "Goodyear",
+  "Yokohama",
+  "Toyo Tires",
+  "Hankook",
+  "Kumho",
+  "Falken",
+  "Dunlop",
+  "GT Radial",
+  "Accelera",
+  "Achilles",
+  "Forceum",
+  "Federal",
+  "Nankang",
+  "Westlake",
+  "Maxxis",
+]
+
+// Alias for tire brand names selection
+export { tireBrandNames as tireBrands2 }
+
+// Export tire brand names as simple string array for select inputs
+export const tireBrandsSimple = tireBrandNames
+
 // Calculate fitment results
 export function calculateFitment(tire: TireSpec, wheel: WheelSpec): FitmentResult {
   const warnings: string[] = []

@@ -5,14 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
 import { FitmentComparison } from "./fitment-comparison"
 import { ProductRecommendations } from "./product-recommendations"
-import { calculateFitment, commonPCDs, regions, type TireSpec, type WheelSpec } from "@/lib/fitment-data"
-import { AlertTriangle, CheckCircle2, Gauge, CircleDot, Ruler, Settings2, Eye, EyeOff } from "lucide-react"
+import { calculateFitment, commonPCDs, regions, wheelBrands, tireBrandNames, type TireSpec, type WheelSpec } from "@/lib/fitment-data"
+import { CircleDot, Gauge, Settings2, Ruler, Palette } from "lucide-react"
 
 export function FitmentCalculator() {
   // Current fitment specs
@@ -24,6 +21,12 @@ export function FitmentCalculator() {
   const [currentWheelOffset, setCurrentWheelOffset] = useState(40)
   const [currentWheelPCD, setCurrentWheelPCD] = useState("5x114.3")
   const [currentCenterBore, setCurrentCenterBore] = useState(67.1)
+  const [currentWheelBrand, setCurrentWheelBrand] = useState("")
+  const [currentWheelModel, setCurrentWheelModel] = useState("")
+  const [currentTireBrand, setCurrentTireBrand] = useState("")
+  const [currentTireModel, setCurrentTireModel] = useState("")
+  const [currentSpokeCount, setCurrentSpokeCount] = useState(10)
+  const [currentWheelColor, setCurrentWheelColor] = useState("Gunmetal")
 
   // Desired fitment specs
   const [desiredTireWidth, setDesiredTireWidth] = useState(225)
@@ -34,10 +37,12 @@ export function FitmentCalculator() {
   const [desiredWheelOffset, setDesiredWheelOffset] = useState(35)
   const [desiredWheelPCD, setDesiredWheelPCD] = useState("5x114.3")
   const [desiredCenterBore, setDesiredCenterBore] = useState(67.1)
-
-  // Visualization toggles
-  const [showTire, setShowTire] = useState(true)
-  const [showWheel, setShowWheel] = useState(true)
+  const [desiredWheelBrand, setDesiredWheelBrand] = useState("")
+  const [desiredWheelModel, setDesiredWheelModel] = useState("")
+  const [desiredTireBrand, setDesiredTireBrand] = useState("")
+  const [desiredTireModel, setDesiredTireModel] = useState("")
+  const [desiredSpokeCount, setDesiredSpokeCount] = useState(10)
+  const [desiredWheelColor, setDesiredWheelColor] = useState("Gunmetal")
   
   // Region for recommendations
   const [region, setRegion] = useState("indonesia")
@@ -75,11 +80,13 @@ export function FitmentCalculator() {
   const currentFitment = useMemo(() => calculateFitment(currentTire, currentWheel), [currentTire, currentWheel])
   const desiredFitment = useMemo(() => calculateFitment(desiredTire, desiredWheel), [desiredTire, desiredWheel])
   
-  // Common tire sizes
+  // Common options
   const tireWidths = [165, 175, 185, 195, 205, 215, 225, 235, 245, 255, 265, 275, 285, 295, 305, 315]
   const tireProfiles = [25, 30, 35, 40, 45, 50, 55, 60, 65, 70]
   const tireDiameters = [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
   const wheelWidths = [5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 12]
+  const spokeCounts = [5, 6, 7, 8, 9, 10, 12, 15, 20]
+  const wheelColors = ["Gunmetal", "Bronze", "Gold", "Silver", "Black", "White", "Matte Black", "Chrome", "Hyper Silver", "Machined"]
 
   // Input card component for reusability
   const SpecInputCard = ({ 
@@ -93,7 +100,13 @@ export function FitmentCalculator() {
     wheelDiameter, setWheelDiameter,
     wheelOffset, setWheelOffset,
     wheelPCD, setWheelPCD,
-    centerBore, setCenterBore
+    centerBore, setCenterBore,
+    wheelBrand, setWheelBrand,
+    wheelModel, setWheelModel,
+    tireBrand, setTireBrand,
+    tireModel, setTireModel,
+    spokeCount, setSpokeCount,
+    wheelColor, setWheelColor
   }: {
     title: string
     description: string
@@ -114,6 +127,18 @@ export function FitmentCalculator() {
     setWheelPCD: (v: string) => void
     centerBore: number
     setCenterBore: (v: number) => void
+    wheelBrand: string
+    setWheelBrand: (v: string) => void
+    wheelModel: string
+    setWheelModel: (v: string) => void
+    tireBrand: string
+    setTireBrand: (v: string) => void
+    tireModel: string
+    setTireModel: (v: string) => void
+    spokeCount: number
+    setSpokeCount: (v: number) => void
+    wheelColor: string
+    setWheelColor: (v: string) => void
   }) => (
     <Card className={`border-border/50 bg-card/50 backdrop-blur ${!isCurrent ? 'border-primary/30' : ''}`}>
       <CardHeader className="pb-3">
@@ -128,60 +153,75 @@ export function FitmentCalculator() {
         <CardDescription className="text-xs">{description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Tire specs */}
-        <div className="space-y-2">
-          <Label className="text-xs text-muted-foreground flex items-center gap-2">
-            <CircleDot className="h-3 w-3" />
-            Ukuran Ban
-          </Label>
-          <div className="grid grid-cols-3 gap-2">
-            <Select value={tireWidth.toString()} onValueChange={(v) => setTireWidth(Number(v))}>
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {tireWidths.map(w => (
-                  <SelectItem key={w} value={w.toString()}>{w}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Select value={tireProfile.toString()} onValueChange={(v) => setTireProfile(Number(v))}>
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {tireProfiles.map(p => (
-                  <SelectItem key={p} value={p.toString()}>{p}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Select value={tireDiameter.toString()} onValueChange={(v) => {
-              setTireDiameter(Number(v))
-              setWheelDiameter(Number(v))
-            }}>
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {tireDiameters.map(d => (
-                  <SelectItem key={d} value={d.toString()}>R{d}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="text-center font-mono text-lg font-bold">
-            {tireWidth}/{tireProfile}R{tireDiameter}
-          </div>
-        </div>
-        
-        {/* Wheel specs */}
+        {/* Wheel Brand & Model */}
         <div className="space-y-2">
           <Label className="text-xs text-muted-foreground flex items-center gap-2">
             <Gauge className="h-3 w-3" />
-            Ukuran Velg
+            Velg Brand & Model
           </Label>
+          <div className="grid grid-cols-2 gap-2">
+            <Select value={wheelBrand || "none"} onValueChange={(v) => setWheelBrand(v === "none" ? "" : v)}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Pilih Brand" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">-- Pilih Brand --</SelectItem>
+                {wheelBrands.map(brand => (
+                  <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              type="text"
+              value={wheelModel}
+              onChange={(e) => setWheelModel(e.target.value)}
+              placeholder="Model (cth: RPF1)"
+              className="h-9 text-sm"
+            />
+          </div>
+          {wheelBrand && wheelModel && (
+            <div className="text-center text-sm font-semibold text-primary">
+              {wheelBrand} {wheelModel}
+            </div>
+          )}
+        </div>
+
+        {/* Wheel Style Options */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground flex items-center gap-2">
+              <Palette className="h-3 w-3" />
+              Warna
+            </Label>
+            <Select value={wheelColor} onValueChange={setWheelColor}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {wheelColors.map(color => (
+                  <SelectItem key={color} value={color}>{color}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Jumlah Spoke</Label>
+            <Select value={spokeCount.toString()} onValueChange={(v) => setSpokeCount(Number(v))}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {spokeCounts.map(count => (
+                  <SelectItem key={count} value={count.toString()}>{count} Spoke</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Wheel specs */}
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">Ukuran Velg</Label>
           <div className="grid grid-cols-2 gap-2">
             <Select value={wheelWidth.toString()} onValueChange={(v) => setWheelWidth(Number(v))}>
               <SelectTrigger className="h-9 text-sm">
@@ -256,6 +296,79 @@ export function FitmentCalculator() {
             />
           </div>
         </div>
+
+        {/* Tire Brand & Model */}
+        <div className="space-y-2 pt-2 border-t border-border/50">
+          <Label className="text-xs text-muted-foreground flex items-center gap-2">
+            <CircleDot className="h-3 w-3" />
+            Ban Brand & Model
+          </Label>
+          <div className="grid grid-cols-2 gap-2">
+            <Select value={tireBrand || "none"} onValueChange={(v) => setTireBrand(v === "none" ? "" : v)}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Pilih Brand" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">-- Pilih Brand --</SelectItem>
+                {tireBrandNames.map(brand => (
+                  <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              type="text"
+              value={tireModel}
+              onChange={(e) => setTireModel(e.target.value)}
+              placeholder="Model (cth: PS5)"
+              className="h-9 text-sm"
+            />
+          </div>
+        </div>
+
+        {/* Tire specs */}
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">Ukuran Ban</Label>
+          <div className="grid grid-cols-3 gap-2">
+            <Select value={tireWidth.toString()} onValueChange={(v) => setTireWidth(Number(v))}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {tireWidths.map(w => (
+                  <SelectItem key={w} value={w.toString()}>{w}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Select value={tireProfile.toString()} onValueChange={(v) => setTireProfile(Number(v))}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {tireProfiles.map(p => (
+                  <SelectItem key={p} value={p.toString()}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Select value={tireDiameter.toString()} onValueChange={(v) => {
+              setTireDiameter(Number(v))
+              setWheelDiameter(Number(v))
+            }}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {tireDiameters.map(d => (
+                  <SelectItem key={d} value={d.toString()}>R{d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-center font-mono text-lg font-bold">
+            {tireWidth}/{tireProfile}R{tireDiameter}
+          </div>
+        </div>
         
         {/* Summary */}
         <div className="pt-2 border-t border-border/50">
@@ -277,7 +390,7 @@ export function FitmentCalculator() {
         {/* Current Fitment */}
         <SpecInputCard
           title="Setup Sekarang"
-          description="Ukuran ban & velg yang terpasang saat ini"
+          description="Velg & ban yang terpasang saat ini"
           isCurrent={true}
           tireWidth={currentTireWidth}
           setTireWidth={setCurrentTireWidth}
@@ -295,12 +408,24 @@ export function FitmentCalculator() {
           setWheelPCD={setCurrentWheelPCD}
           centerBore={currentCenterBore}
           setCenterBore={setCurrentCenterBore}
+          wheelBrand={currentWheelBrand}
+          setWheelBrand={setCurrentWheelBrand}
+          wheelModel={currentWheelModel}
+          setWheelModel={setCurrentWheelModel}
+          tireBrand={currentTireBrand}
+          setTireBrand={setCurrentTireBrand}
+          tireModel={currentTireModel}
+          setTireModel={setCurrentTireModel}
+          spokeCount={currentSpokeCount}
+          setSpokeCount={setCurrentSpokeCount}
+          wheelColor={currentWheelColor}
+          setWheelColor={setCurrentWheelColor}
         />
 
         {/* Desired Fitment */}
         <SpecInputCard
           title="Setup Baru"
-          description="Ukuran ban & velg yang diinginkan"
+          description="Velg & ban yang diinginkan"
           isCurrent={false}
           tireWidth={desiredTireWidth}
           setTireWidth={setDesiredTireWidth}
@@ -318,6 +443,18 @@ export function FitmentCalculator() {
           setWheelPCD={setDesiredWheelPCD}
           centerBore={desiredCenterBore}
           setCenterBore={setDesiredCenterBore}
+          wheelBrand={desiredWheelBrand}
+          setWheelBrand={setDesiredWheelBrand}
+          wheelModel={desiredWheelModel}
+          setWheelModel={setDesiredWheelModel}
+          tireBrand={desiredTireBrand}
+          setTireBrand={setDesiredTireBrand}
+          tireModel={desiredTireModel}
+          setTireModel={setDesiredTireModel}
+          spokeCount={desiredSpokeCount}
+          setSpokeCount={setDesiredSpokeCount}
+          wheelColor={desiredWheelColor}
+          setWheelColor={setDesiredWheelColor}
         />
       </div>
 
@@ -329,6 +466,18 @@ export function FitmentCalculator() {
         desiredTire={desiredTire}
         desiredWheel={desiredWheel}
         desiredFitment={desiredFitment}
+        currentWheelBrand={currentWheelBrand}
+        currentWheelModel={currentWheelModel}
+        currentTireBrand={currentTireBrand}
+        currentTireModel={currentTireModel}
+        currentSpokeCount={currentSpokeCount}
+        currentWheelColor={currentWheelColor}
+        desiredWheelBrand={desiredWheelBrand}
+        desiredWheelModel={desiredWheelModel}
+        desiredTireBrand={desiredTireBrand}
+        desiredTireModel={desiredTireModel}
+        desiredSpokeCount={desiredSpokeCount}
+        desiredWheelColor={desiredWheelColor}
       />
 
       {/* Region Selection & Product Recommendations */}
