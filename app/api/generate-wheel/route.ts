@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     // GUNAKAN SDK RESMI GOOGLE (Bukan Vercel AI SDK)
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY!);
     // Gunakan model imagen-3 atau gemini-2.0-flash
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const result = await model.generateContent({
       contents: [{ role: "user", parts: [{ text: prompt }] }],
