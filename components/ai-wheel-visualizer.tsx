@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { Sparkles, Copy, Check, ExternalLink, Wand2 } from "lucide-react"
+import { Sparkles, Copy, Check, Wand2, Loader2, ImageIcon, AlertCircle, Download, RefreshCw } from "lucide-react"
+import Image from "next/image"
 import type { TireSpec, WheelSpec } from "@/lib/fitment-data"
 
 interface AIWheelVisualizerProps {
@@ -31,51 +32,78 @@ export function AIWheelVisualizer({
 }: AIWheelVisualizerProps) {
   const [copied, setCopied] = useState(false)
   const [showPrompt, setShowPrompt] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedImages, setGeneratedImages] = useState<string[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [usedPrompt, setUsedPrompt] = useState<string>("")
 
-  // Generate AI prompt for Google AI Studio / Gemini
+  // Generate AI prompt
   const generatePrompt = () => {
     const tireSize = `${tire.width}/${tire.profile}R${tire.diameter}`
     const wheelSize = `${wheel.width}J x R${wheel.diameter}`
     const offsetStr = `ET${wheel.offset > 0 ? "+" : ""}${wheel.offset}`
 
-    return `Generate a highly detailed, photorealistic image of a car wheel and tire setup with the following specifications:
+    return `Generate a highly detailed, photorealistic image of a car wheel and tire setup:
 
-## Wheel Specifications:
-- Brand: ${wheelBrand || "JDM style"}
-- Model: ${wheelModel || "multi-spoke racing wheel"}
-- Size: ${wheelSize}
-- Offset: ${offsetStr}
-- PCD: ${wheel.pcd}
-- Spoke Count: ${spokeCount} spokes
-- Finish/Color: ${wheelColor || "Gunmetal grey with machined lip"}
-- Style: Japanese racing wheel design, similar to Rays Engineering or Work Wheels
+WHEEL: ${wheelBrand || "JDM style"} ${wheelModel || "racing wheel"}, ${wheelSize}, ${offsetStr}, ${spokeCount} spokes, ${wheelColor || "Gunmetal grey"} finish, PCD ${wheel.pcd}
 
-## Tire Specifications:
-- Brand: ${tireBrand || "High performance"}
-- Model: ${tireModel || "Sport tire"}
-- Size: ${tireSize}
-- Type: Ultra High Performance Summer tire
+TIRE: ${tireBrand || "Performance"} ${tireModel || "Sport"}, ${tireSize}, Ultra High Performance
 
-## Image Requirements:
-- View: Front 3/4 angle showing the wheel face and partial tire sidewall
-- Lighting: Professional studio lighting with soft shadows
-- Background: Clean gradient background (dark grey to black)
-- Quality: 4K resolution, sharp focus on wheel details
-- Details: Show spoke design clearly, tire sidewall text visible, lip finish visible
-- Mood: Premium automotive photography style
-
-## Additional Details:
-- Show the tire mounted on the wheel properly
-- Tire sidewall should display the size marking "${tireSize}"
-${tireBrand ? `- Tire sidewall should show "${tireBrand.toUpperCase()}" branding` : ""}
-${wheelBrand ? `- Center cap or spoke should show "${wheelBrand.toUpperCase()}" branding` : ""}
-- Wheel should have authentic JDM racing wheel aesthetics
-- Include subtle reflections to show metallic finish
-
-Make the image look like a professional product shot for an automotive wheel catalog.`
+IMAGE STYLE:
+- Front 3/4 angle view showing wheel face and tire sidewall
+- Professional studio lighting, dark gradient background
+- 4K quality, sharp focus on wheel details
+- Tire sidewall shows "${tireSize}" size marking
+${tireBrand ? `- Tire shows "${tireBrand.toUpperCase()}" branding on sidewall` : ""}
+${wheelBrand ? `- Wheel shows "${wheelBrand.toUpperCase()}" on center cap or spokes` : ""}
+- Premium automotive product photography style
+- Authentic JDM racing wheel aesthetics with metallic reflections`
   }
 
   const prompt = generatePrompt()
+
+  // Generate image using Gemini API
+  const generateImage = async () => {
+    setIsGenerating(true)
+    setError(null)
+    setGeneratedImages([])
+    setUsedPrompt(prompt)
+
+    try {
+      const response = await fetch("/api/generate-wheel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tire,
+          wheel,
+          wheelBrand,
+          wheelModel,
+          tireBrand,
+          tireModel,
+          spokeCount,
+          wheelColor,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Gagal generate gambar")
+      }
+
+      if (data.images && data.images.length > 0) {
+        setGeneratedImages(data.images)
+      } else {
+        // If no images but text response, show info
+        setError("Model berhasil diproses tetapi tidak menghasilkan gambar. Coba lagi atau gunakan prompt manual.")
+      }
+    } catch (err) {
+      console.error("[v0] Generate image error:", err)
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan saat generate gambar")
+    } finally {
+      setIsGenerating(false)
+    }
+  }
 
   const copyToClipboard = async () => {
     try {
@@ -83,7 +111,6 @@ Make the image look like a professional product shot for an automotive wheel cat
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // Fallback for older browsers
       const textarea = document.createElement("textarea")
       textarea.value = prompt
       document.body.appendChild(textarea)
@@ -95,8 +122,13 @@ Make the image look like a professional product shot for an automotive wheel cat
     }
   }
 
-  const openGoogleAIStudio = () => {
-    window.open("https://aistudio.google.com/", "_blank")
+  const downloadImage = (imageUrl: string, index: number) => {
+    const link = document.createElement("a")
+    link.href = imageUrl
+    link.download = `wheel-${wheelBrand || "custom"}-${wheelModel || "design"}-${index + 1}.png`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   return (
@@ -106,11 +138,11 @@ Make the image look like a professional product shot for an automotive wheel cat
           <Sparkles className="h-5 w-5 text-primary" />
           AI Visualization
           <Badge variant="secondary" className="ml-2 text-xs">
-            Google AI Studio
+            Gemini AI
           </Badge>
         </CardTitle>
         <CardDescription>
-          Generate gambar realistis wheel & tire kamu menggunakan Gemini AI
+          Generate gambar realistis wheel & tire kamu secara otomatis dengan Gemini AI
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -139,19 +171,107 @@ Make the image look like a professional product shot for an automotive wheel cat
           </div>
         </div>
 
-        {/* Action buttons */}
+        {/* Main generate button */}
+        <Button
+          onClick={generateImage}
+          disabled={isGenerating}
+          className="w-full h-12 text-base bg-primary hover:bg-primary/90"
+          size="lg"
+        >
+          {isGenerating ? (
+            <>
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              Generating dengan Gemini AI...
+            </>
+          ) : (
+            <>
+              <ImageIcon className="h-5 w-5 mr-2" />
+              Generate Visualisasi dengan AI
+            </>
+          )}
+        </Button>
+
+        {/* Error display */}
+        {error && (
+          <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-destructive">Gagal Generate Gambar</p>
+              <p className="text-xs text-muted-foreground mt-1">{error}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => setShowPrompt(true)}
+              >
+                Gunakan Prompt Manual
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Generated images display */}
+        {generatedImages.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-500" />
+                Hasil Visualisasi
+              </h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={generateImage}
+                disabled={isGenerating}
+              >
+                <RefreshCw className={`h-4 w-4 mr-1 ${isGenerating ? "animate-spin" : ""}`} />
+                Generate Ulang
+              </Button>
+            </div>
+            <div className="grid gap-4">
+              {generatedImages.map((imageUrl, index) => (
+                <div key={index} className="relative group rounded-lg overflow-hidden border border-border/50">
+                  <Image
+                    src={imageUrl}
+                    alt={`Generated wheel visualization ${index + 1}`}
+                    width={800}
+                    height={600}
+                    className="w-full h-auto"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => downloadImage(imageUrl, index)}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              {wheelBrand} {wheelModel} dengan {tireBrand} {tireModel} {tire.width}/{tire.profile}R{tire.diameter}
+            </p>
+          </div>
+        )}
+
+        {/* Secondary action buttons */}
         <div className="flex flex-wrap gap-2">
           <Button
             onClick={() => setShowPrompt(!showPrompt)}
             variant="outline"
+            size="sm"
             className="flex-1"
           >
             <Wand2 className="h-4 w-4 mr-2" />
-            {showPrompt ? "Sembunyikan Prompt" : "Lihat AI Prompt"}
+            {showPrompt ? "Sembunyikan" : "Lihat Prompt"}
           </Button>
           <Button
             onClick={copyToClipboard}
             variant="outline"
+            size="sm"
             className="flex-1"
           >
             {copied ? (
@@ -166,20 +286,13 @@ Make the image look like a professional product shot for an automotive wheel cat
               </>
             )}
           </Button>
-          <Button
-            onClick={openGoogleAIStudio}
-            className="flex-1 bg-primary hover:bg-primary/90"
-          >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Buka AI Studio
-          </Button>
         </div>
 
         {/* Prompt display */}
         {showPrompt && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Generated Prompt:</label>
+              <label className="text-sm font-medium">AI Prompt:</label>
               <Badge variant="outline" className="text-xs">
                 {prompt.length} characters
               </Badge>
@@ -187,33 +300,32 @@ Make the image look like a professional product shot for an automotive wheel cat
             <Textarea
               value={prompt}
               readOnly
-              className="min-h-[200px] font-mono text-xs bg-secondary/30"
+              className="min-h-[150px] font-mono text-xs bg-secondary/30"
             />
+            <p className="text-xs text-muted-foreground">
+              Copy prompt ini untuk digunakan di Google AI Studio, ChatGPT, Midjourney, atau AI image generator lainnya.
+            </p>
           </div>
         )}
 
-        {/* Instructions */}
-        <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-          <h4 className="text-sm font-semibold mb-2 text-primary">Cara Menggunakan:</h4>
-          <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
-            <li>Klik &quot;Copy Prompt&quot; untuk menyalin prompt ke clipboard</li>
-            <li>Klik &quot;Buka AI Studio&quot; untuk membuka Google AI Studio</li>
-            <li>Login dengan akun Google kamu</li>
-            <li>Pilih model Gemini (disarankan: Gemini 2.0 Flash atau Imagen 3)</li>
-            <li>Paste prompt yang sudah di-copy</li>
-            <li>Klik Generate untuk membuat visualisasi</li>
-          </ol>
-        </div>
+        {/* Used prompt for last generation */}
+        {usedPrompt && generatedImages.length > 0 && !showPrompt && (
+          <details className="text-xs">
+            <summary className="text-muted-foreground cursor-pointer hover:text-foreground">
+              Lihat prompt yang digunakan
+            </summary>
+            <pre className="mt-2 p-3 rounded bg-secondary/30 whitespace-pre-wrap font-mono overflow-auto max-h-32">
+              {usedPrompt}
+            </pre>
+          </details>
+        )}
 
-        {/* Alternative models */}
-        <div className="text-xs text-muted-foreground">
-          <p className="font-medium mb-1">Model AI yang disarankan:</p>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">Gemini 2.0 Flash</Badge>
-            <Badge variant="outline">Imagen 3</Badge>
-            <Badge variant="outline">DALL-E 3</Badge>
-            <Badge variant="outline">Midjourney</Badge>
-          </div>
+        {/* Info about API */}
+        <div className="p-3 rounded-lg bg-accent/10 border border-accent/20">
+          <p className="text-xs text-muted-foreground">
+            <span className="font-medium text-accent">Info:</span> Visualisasi di-generate menggunakan Gemini AI melalui Vercel AI Gateway. 
+            Hasil mungkin bervariasi setiap kali generate.
+          </p>
         </div>
       </CardContent>
     </Card>
