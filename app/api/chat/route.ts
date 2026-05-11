@@ -2,7 +2,7 @@ import { streamText, convertToModelMessages } from "ai"
 import { google } from "@ai-sdk/google" // Tambahkan import ini
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 
-const google = createGoogleGenerativeAI({
+const googleAI = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_GENERATED_AI_API_KEY,
 });
 
@@ -49,7 +49,7 @@ Gunakan bahasa Indonesia yang santai tapi informatif. Gunakan emoji secukupnya u
 
   const result = await streamText({
     // Ganti 'openai/...' dengan fungsi google()
-    model: google('gemini-1.5-flash', {
+    model: googleAI('gemini-1.5-flash', {
     structuredOutputs: true,
     }),// Anda bisa menggunakan "gemini-1.5-pro" untuk hasil lebih akurat
     system: systemPrompt,
