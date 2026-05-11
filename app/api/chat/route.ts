@@ -44,7 +44,7 @@ Gunakan bahasa Indonesia yang santai tapi informatif. Gunakan emoji secukupnya u
 
   const result = streamText({
     // Ganti 'openai/...' dengan fungsi google()
-    model: google("gemini-1.5-flash-latest"), // Anda bisa menggunakan "gemini-1.5-pro" untuk hasil lebih akurat
+    model: google('gemini-1.5-flash-001'), // Anda bisa menggunakan "gemini-1.5-pro" untuk hasil lebih akurat
     system: systemPrompt,
     messages: await convertToModelMessages(messages),
   })
