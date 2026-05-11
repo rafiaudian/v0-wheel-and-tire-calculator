@@ -49,5 +49,5 @@ Gunakan bahasa Indonesia yang santai tapi informatif. Gunakan emoji secukupnya u
   })
 
   // Gunakan format yang kompatibel dengan banyak versi AI SDK
-  return result.toAIStreamResponse()
+  return result.toDataStreamResponse()
 }
