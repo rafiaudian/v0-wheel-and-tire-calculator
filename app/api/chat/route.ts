@@ -4,6 +4,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 
 const googleAI = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_GENERATED_AI_API_KEY,
+  baseURL: 'https://generativelanguage.googleapis.com/v1', 
 });
 
 export async function POST(req: Request) {
