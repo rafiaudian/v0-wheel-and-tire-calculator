@@ -1,5 +1,10 @@
 import { streamText, convertToModelMessages } from "ai"
 import { google } from "@ai-sdk/google" // Tambahkan import ini
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_GENERATED_AI_API_KEY,
+});
 
 export async function POST(req: Request) {
   const { messages } = await req.json()
