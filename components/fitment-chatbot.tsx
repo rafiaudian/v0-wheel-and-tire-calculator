@@ -48,7 +48,7 @@ export function FitmentChatbot() {
 
   return (
     <Card className={cn(
-      "fixed bottom-4 right-4 z-50 shadow-2xl transition-all duration-300 border-primary/20",
+      "fixed bottom-4 right-4 z-50 shadow-2xl transition-all duration-300 border-primary/20 bg-background",
       isMinimized ? "w-72 h-14" : "w-[350px] sm:w-[400px] h-[500px] flex flex-col"
     )}>
       <CardHeader className="p-3 bg-primary text-primary-foreground flex flex-row items-center justify-between rounded-t-xl">
@@ -58,7 +58,7 @@ export function FitmentChatbot() {
         </div>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground" onClick={() => setIsMinimized(!isMinimized)}>
-            {isMinimized ? <Minimize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+            {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground" onClick={() => setIsOpen(false)}>
             <X className="w-4 h-4" />
@@ -67,7 +67,7 @@ export function FitmentChatbot() {
       </CardHeader>
 
       {!isMinimized && (
-        <>
+        <div className="flex-1 flex flex-col min-h-0">
           <CardContent className="flex-1 overflow-hidden p-0 flex flex-col bg-muted/30">
             <ScrollArea className="flex-1 p-4">
               <div ref={scrollRef} className="space-y-4">
@@ -114,8 +114,9 @@ export function FitmentChatbot() {
                 <Send className="w-4 h-4" />
               </Button>
             </form>
-          </>
-        )}
+          </CardContent>
+        </div>
+      )}
     </Card>
   )
 }
