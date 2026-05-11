@@ -1,11 +1,5 @@
 import { streamText, convertToModelMessages } from "ai"
-import { google } from "@ai-sdk/google" // Tambahkan import ini
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-
-const googleAI = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_GENERATED_AI_API_KEY,
-  baseURL: 'https://generativelanguage.googleapis.com/v1', 
-});
+import { google } from "@ai-sdk/google"
 
 export async function POST(req: Request) {
   const { messages } = await req.json()
@@ -49,13 +43,14 @@ Selalu tanya informasi yang diperlukan jika user belum memberikan detail lengkap
 Gunakan bahasa Indonesia yang santai tapi informatif. Gunakan emoji secukupnya untuk membuat percakapan lebih engaging.` 
 
   const result = await streamText({
-    // Ganti 'openai/...' dengan fungsi google()
-    model: googleAI('gemini-1.5-flash', {
-    structuredOutputs: true,
-    }),// Anda bisa menggunakan "gemini-1.5-pro" untuk hasil lebih akurat
-    system: systemPrompt,
-    messages: await convertToModelMessages(messages),
+    model: google("gemini-1.5-flash"), // Tidak perlu createGoogleGenerativeAI manual jika hanya butuh default
+    // Alih-alih menggunakan field 'system: ...', kita masukkan ke awal messages
+    messages: [
+      { role: 'system', content: systemPrompt },
+      ...await convertToModelMessages(messages)
+    ],
   })
 
-  return result.toUIMessageStreamResponse()
+  // Gunakan toDataStreamResponse untuk standar terbaru v0/Vercel
+  return result.toDataStreamResponse()
 }
