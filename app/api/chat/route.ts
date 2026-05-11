@@ -1,4 +1,5 @@
 import { streamText, convertToModelMessages } from "ai"
+import { google } from "@ai-sdk/google" // Tambahkan import ini
 
 export async function POST(req: Request) {
   const { messages } = await req.json()
@@ -39,10 +40,11 @@ Selalu tanya informasi yang diperlukan jika user belum memberikan detail lengkap
 - Tujuan modifikasi (daily, stance, performance)
 - Budget
 
-Gunakan bahasa Indonesia yang santai tapi informatif. Gunakan emoji secukupnya untuk membuat percakapan lebih engaging.`
+Gunakan bahasa Indonesia yang santai tapi informatif. Gunakan emoji secukupnya untuk membuat percakapan lebih engaging.` 
 
   const result = streamText({
-    model: "openai/gpt-5-mini",
+    // Ganti 'openai/...' dengan fungsi google()
+    model: google("gemini-1.5-flash"), // Anda bisa menggunakan "gemini-1.5-pro" untuk hasil lebih akurat
     system: systemPrompt,
     messages: await convertToModelMessages(messages),
   })
