@@ -43,14 +43,11 @@ Selalu tanya informasi yang diperlukan jika user belum memberikan detail lengkap
 Gunakan bahasa Indonesia yang santai tapi informatif. Gunakan emoji secukupnya untuk membuat percakapan lebih engaging.` 
 
   const result = await streamText({
-    model: google("gemini-1.5-flash"), // Tidak perlu createGoogleGenerativeAI manual jika hanya butuh default
-    // Alih-alih menggunakan field 'system: ...', kita masukkan ke awal messages
-    messages: [
-      { role: 'system', content: systemPrompt },
-      ...await convertToModelMessages(messages)
-    ],
+    model: google("gemini-1.5-flash"),
+    system: systemPrompt, // Gunakan properti 'system' agar aman dan tidak muncul warning
+    messages: await convertToModelMessages(messages),
   })
 
-  // Gunakan toDataStreamResponse untuk standar terbaru v0/Vercel
-  return result.toDataStreamResponse()
+  // Gunakan format yang kompatibel dengan banyak versi AI SDK
+  return result.toAIStreamResponse()
 }
