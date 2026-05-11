@@ -42,9 +42,11 @@ Selalu tanya informasi yang diperlukan jika user belum memberikan detail lengkap
 
 Gunakan bahasa Indonesia yang santai tapi informatif. Gunakan emoji secukupnya untuk membuat percakapan lebih engaging.` 
 
-  const result = streamText({
+  const result = await streamText({
     // Ganti 'openai/...' dengan fungsi google()
-    model: google('gemini-1.5-flash-001'), // Anda bisa menggunakan "gemini-1.5-pro" untuk hasil lebih akurat
+    model: google('gemini-1.5-flash-001', {
+    structuredOutputs: true,
+    }),// Anda bisa menggunakan "gemini-1.5-pro" untuk hasil lebih akurat
     system: systemPrompt,
     messages: await convertToModelMessages(messages),
   })
