@@ -16,14 +16,12 @@ export function FitmentChatbot() {
   const [input, setInput] = useState("")
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Perbaikan: Hapus DefaultChatTransport dan gunakan konfigurasi standar
   const { messages, append, status } = useChat({
     api: "/api/chat",
   })
 
   const isLoading = status === "streaming" || status === "submitted"
 
-  // Auto scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
@@ -33,11 +31,7 @@ export function FitmentChatbot() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || isLoading) return
-    
-    await append({
-      content: input,
-      role: 'user',
-    })
+    await append({ content: input, role: 'user' })
     setInput("")
   }
 
@@ -64,7 +58,7 @@ export function FitmentChatbot() {
         </div>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground" onClick={() => setIsMinimized(!isMinimized)}>
-            {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+            {isMinimized ? <Minimize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground" onClick={() => setIsOpen(false)}>
             <X className="w-4 h-4" />
@@ -75,11 +69,11 @@ export function FitmentChatbot() {
       {!isMinimized && (
         <>
           <CardContent className="flex-1 overflow-hidden p-0 flex flex-col bg-muted/30">
-            <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-              <div className="space-y-4">
+            <ScrollArea className="flex-1 p-4">
+              <div ref={scrollRef} className="space-y-4">
                 {messages.length === 0 && (
                   <div className="bg-background border rounded-lg p-3 text-sm text-muted-foreground text-center italic">
-                    Halo! Saya FitmentBot. Ada yang bisa saya bantu terkait ukuran velg atau ban mobil Anda?
+                    Halo! Saya FitmentBot. Ada yang bisa saya bantu?
                   </div>
                 )}
                 {messages.map((m) => (
@@ -89,6 +83,39 @@ export function FitmentChatbot() {
                         {m.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                       </AvatarFallback>
                     </Avatar>
-                    <div className={cn(
-                      "max-w-[80%] rounded-lg p-3 text-sm shadow-sm",
-                      m.role === "user"
+                    <div className={cn("max-w-[80%] rounded-lg p-3 text-sm shadow-sm", m.role === "user" ? "bg-primary text-primary-foreground" : "bg-background border")}>
+                      {m.content}
+                    </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="flex items-start gap-2">
+                    <Avatar className="w-8 h-8 border">
+                      <AvatarFallback className="bg-muted">
+                        <Bot className="w-4 h-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="bg-background border rounded-lg p-3">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+            <form onSubmit={handleSubmit} className="p-3 bg-background border-t flex gap-2">
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Tanya FitmentBot..."
+                className="flex-1"
+                disabled={isLoading}
+              />
+              <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+                <Send className="w-4 h-4" />
+              </Button>
+            </form>
+          </>
+        )}
+    </Card>
+  )
+}
